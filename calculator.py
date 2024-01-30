@@ -1,24 +1,18 @@
 import pandas as pd
 
-file_path = 'Data/data.xlsx'  # Замените на путь к вашему файлу
+file_path = 'Data/data.xlsx'
+
 xls = pd.ExcelFile(file_path)
 
-result_data = []
+output_file_path = 'Data/results.xlsx'
+writer = pd.ExcelWriter(output_file_path, engine='xlsxwriter')
+
 
 for sheet_name in xls.sheet_names:
-    df = xls.parse(sheet_name)
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    df['Расстояние'] = df['Скорость (м/с)'] * df['Время (с)']
+    df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-    speed_column = 'Скорость (м/с)'
-    time_column = 'Время (с)'
+writer._save()
 
-    df[speed_column] = pd.to_numeric(df[speed_column], errors='coerce')
-    df[time_column] = pd.to_numeric(df[time_column], errors='coerce')
-
-    df['Расстояние (м)'] = df[speed_column] * df[time_column]
-
-    result_data.append(df)
-
-result_file_path = 'Data/results.xlsx'
-with pd.ExcelWriter(result_file_path, engine='xlsxwriter') as writer:
-    for i, result_df in enumerate(result_data):
-        result_df.to_excel(writer, sheet_name=f'Буровая_{i + 1}', index=False)
+print(f"Результаты сохранены в файл: {output_file_path}")
