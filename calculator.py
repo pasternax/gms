@@ -1,14 +1,24 @@
-import random
+import pandas as pd
 
-data = []
+file_path = 'Data/data.xlsx'  # Замените на путь к вашему файлу
+xls = pd.ExcelFile(file_path)
 
-for i in range(1, 11):
-    speeds = [random.uniform(1400, 2500) for _ in range(10)]
-    times = [random.uniform(10, 100) for _ in range(10)]
+result_data = []
 
-    data.append({"Буровая установка": i, "Скорость (м/с)": speeds, "Время (с)": times})
+for sheet_name in xls.sheet_names:
+    df = xls.parse(sheet_name)
 
-for entry in data:
-    print(f"Буровая установка {entry['Буровая установка']}:")
-    for j in range(10):
-        print(f"  Замер {j+1}: Скорость = {entry['Скорость (м/с)'][j]}, Время = {entry['Время (с)'][j]}")
+    speed_column = 'Скорость (м/с)'
+    time_column = 'Время (с)'
+
+    df[speed_column] = pd.to_numeric(df[speed_column], errors='coerce')
+    df[time_column] = pd.to_numeric(df[time_column], errors='coerce')
+
+    df['Расстояние (м)'] = df[speed_column] * df[time_column]
+
+    result_data.append(df)
+
+result_file_path = 'Data/results.xlsx'
+with pd.ExcelWriter(result_file_path, engine='xlsxwriter') as writer:
+    for i, result_df in enumerate(result_data):
+        result_df.to_excel(writer, sheet_name=f'Буровая_{i + 1}', index=False)
